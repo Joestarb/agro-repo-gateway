@@ -22,7 +22,11 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "types": ["node"],
-    "typeRoots": ["node_modules/@types"]
+    "typeRoots": ["node_modules/@types"],
+      "paths": {
+      "@agro-project/common/*": ["../../packages/common/src/*"],
+      "common/*": ["../../packages/common/src/*"]
+    },
     
   }
 }
