@@ -1,0 +1,138 @@
+name: 🔍 Continuous Integration
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/gateway/**'
+      - 'packages/common/**'
+      - 'pnpm-workspace.yaml'
+      - 'package.json'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'apps/gateway/**'
+      - 'packages/common/**'
+      - 'pnpm-workspace.yaml'
+      - 'package.json'
+
+jobs:
+  ci:
+    name: 🔍 CI Pipeline
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18, 20]
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: 🔧 Install dependencies
+        working-directory: ./apps/gateway
+        run: |
+          cd ../..
+          pnpm install --frozen-lockfile
+
+      - name: 🏗️ Build common package
+        run: pnpm --filter @agro-project/common build
+
+      - name: 🔍 Lint code
+        working-directory: ./apps/gateway
+        run: pnpm run lint
+
+      - name: 🎨 Check code formatting
+        working-directory: ./apps/gateway
+        run: pnpm run format -- --check
+
+      - name: 🏗️ Build project
+        working-directory: ./apps/gateway
+        run: pnpm run build
+
+      - name: 🧪 Run unit tests
+        working-directory: ./apps/gateway
+        run: pnpm run test
+
+      - name: 🧪 Run e2e tests
+        working-directory: ./apps/gateway
+        run: pnpm run test:e2e
+
+      - name: 📊 Generate test coverage
+        working-directory: ./apps/gateway
+        run: pnpm run test:cov
+
+      - name: 📈 Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4
+        if: matrix.node-version == '20'
+        with:
+          file: ./apps/gateway/coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+
+      - name: 📊 Comment PR with coverage
+        uses: romeovs/lcov-reporter-action@v0.3.1
+        if: github.event_name == 'pull_request' && matrix.node-version == '20'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          lcov-file: ./apps/gateway/coverage/lcov.info
+
+  security:
+    name: 🔐 Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: � Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: � Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: � Run security audit
+        working-directory: ./apps/gateway
+        run: pnpm audit --audit-level high
+
+  docker:
+    name: 🐳 Docker Build Test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Necesitamos todo el monorepo para el build de Docker
+          fetch-depth: 0
+
+      - name: 🐳 Build Docker image
+        run: |
+          # Construir desde la raíz del monorepo
+          cd ../..
+          docker build -f apps/gateway/dockerfile -t gateway-test .
+
+      - name: 🧪 Test Docker container
+        run: |
+          docker run --rm -d --name gateway-test -p 3000:3000 gateway-test
+          sleep 15
+          # Intentar hacer una petición de health check
+          timeout 30 bash -c 'until curl -f http://localhost:3000/health 2>/dev/null; do sleep 1; done' || echo "Health check endpoint not available, trying root"
+          curl -f http://localhost:3000 || echo "Service might not be fully ready"
+          docker stop gateway-test

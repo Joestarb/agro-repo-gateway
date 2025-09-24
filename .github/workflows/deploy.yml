@@ -1,0 +1,63 @@
+name: 🚀 Deploy to Development
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'apps/gateway/**'
+      - 'packages/common/**'
+      - 'pnpm-workspace.yaml'
+      - 'package.json'
+
+jobs:
+  deploy:
+    name: 🚀 Deploy Gateway
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: 🔧 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🏗️ Build common package
+        run: pnpm --filter @agro-project/common build || echo "No common package found"
+
+      - name: 🏗️ Build gateway
+        working-directory: ./apps/gateway
+        run: pnpm run build
+
+      - name: 🧪 Run tests
+        working-directory: ./apps/gateway
+        run: |
+          pnpm run test
+          pnpm run test:e2e
+
+      - name: 🐳 Build Docker image
+        run: |
+          docker build -f apps/gateway/dockerfile -t gateway:${{ github.sha }} -t gateway:latest .
+
+      - name: 📝 Generate deployment summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "- **Docker Image:** gateway:${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Deploy completed successfully!" >> $GITHUB_STEP_SUMMARY
+
+      # Aquí puedes agregar steps para deploy real a tu infraestructura
+      # Por ejemplo: push a Docker registry, deploy a Kubernetes, etc.

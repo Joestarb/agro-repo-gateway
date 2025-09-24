@@ -1,4 +1,4 @@
-name: Auto Pull Request to Develop
+name: CI/CD - Auto Pull Request to Develop
 
 on:
   push:
@@ -17,17 +17,105 @@ permissions:
   pull-requests: write
 
 jobs:
-  create-pr:
+  # Job de CI - Ejecuta todas las verificaciones de calidad
+  ci:
+    name: 🔍 Continuous Integration
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          token: ${{ secrets.TOKEN_SECRET }}
-          base: develop
-          branch: ${{ github.ref_name }}
-          title: "Auto PR: ${{ github.ref_name }} → develop"
-          body: "Pull request generado automáticamente desde ${{ github.ref_name }} hacia develop."
+          node-version: '20'
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: 🔧 Install dependencies
+        working-directory: ./apps/gateway
+        run: |
+          cd ../..
+          pnpm install --frozen-lockfile
+
+      - name: 🏗️ Build common package (if exists)
+        run: pnpm --filter @agro-project/common build || echo "No common package found"
+
+      - name: 🔍 Lint code
+        working-directory: ./apps/gateway
+        run: pnpm run lint
+
+      - name: 🎨 Check code formatting
+        working-directory: ./apps/gateway
+        run: pnpm run format -- --check
+
+      - name: 🏗️ Build project
+        working-directory: ./apps/gateway
+        run: pnpm run build
+
+      - name: 🧪 Run unit tests
+        working-directory: ./apps/gateway
+        run: pnpm run test
+
+      - name: 🧪 Run e2e tests
+        working-directory: ./apps/gateway
+        run: pnpm run test:e2e
+
+      - name: 📊 Generate test coverage
+        working-directory: ./apps/gateway
+        run: pnpm run test:cov
+
+      - name: 📈 Upload coverage to artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: apps/gateway/coverage/
+
+  # Job para crear PR - Solo se ejecuta si CI pasa
+  create-pr:
+    name: 📝 Create Pull Request
+    needs: ci # Depende del job de CI
+    if: success() # Solo se ejecuta si CI fue exitoso
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📝 Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Verificar si ya existe un PR
+          if gh pr list --head ${{ github.ref_name }} --base develop --json number --jq length | grep -q "0"; then
+            gh pr create \
+              --base develop \
+              --head ${{ github.ref_name }} \
+              --title "🚀 Auto PR: ${{ github.ref_name }} → develop" \
+              --body "## 📋 Descripción
+              
+              Pull request generado automáticamente desde \`${{ github.ref_name }}\` hacia \`develop\`.
+              
+              ## ✅ Verificaciones de CI
+              
+              - ✅ Linting pasado
+              - ✅ Formato de código verificado  
+              - ✅ Compilación exitosa
+              - ✅ Tests unitarios pasados
+              - ✅ Tests e2e pasados
+              - ✅ Cobertura de tests generada
+              
+              ## 🔗 Enlaces
+              
+              - 📊 [Ver reporte de cobertura en artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              
+              ---
+              
+              *Este PR fue creado automáticamente por GitHub Actions* 🤖"
+            echo "✅ Pull request creado exitosamente"
+          else
+            echo "ℹ️ Ya existe un pull request para esta rama"
+          fi
