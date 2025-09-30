@@ -9,7 +9,7 @@ export class ProxyPlotsController {
 
   private base() {
     const baseUrl = process.env.PLOTS_SERVICE_URL || 'http://agro-repo-plots:3000';
-    return `${baseUrl}`;
+    return `${baseUrl}/parcelas`;
   }
 
   @Get()
