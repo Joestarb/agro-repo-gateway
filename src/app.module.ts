@@ -4,7 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ProxyAuthController } from './proxy/proxyAuth.controller';
-
+import { ProxyPlotsController } from './proxy/proxyPlots.controller';
 @Module({
   imports: [
     HttpModule,
@@ -13,7 +13,7 @@ import { ProxyAuthController } from './proxy/proxyAuth.controller';
       envFilePath: '../../../.env',
     }),
   ],
-  controllers: [AppController, ProxyAuthController],
+  controllers: [ProxyAuthController, ProxyPlotsController],
   providers: [AppService],
 })
 export class AppModule {}
