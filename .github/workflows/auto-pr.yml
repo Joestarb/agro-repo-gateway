@@ -3,14 +3,15 @@ name: Auto Pull Request to Develop
 on:
   push:
     branches:
-      - 'feature/**'
-      - 'feature-*'
-      - 'feat/**'
-      - 'feat-*'
-      - 'bugfix/**'
-      - 'bugfix-*'
-      - 'hotfix/**'
-      - 'hotfix-*'
+      - "feature/**"
+      - "feature-*"
+      - "feat/**"
+      - "feat-*"
+      - "bugfix/**"
+      - "bugfix-*"
+      - "hotfix/**"
+      - "hotfix-*"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -23,11 +24,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
+      - name: Create Pull Request to develop
+        uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.TOKEN_SECRET }}
-          base: develop
-          branch: ${{ github.ref_name }}
-          title: "Auto PR: ${{ github.ref_name }} → develop"
-          body: "Pull request generado automáticamente desde ${{ github.ref_name }} hacia develop."
+          commit-message: "Auto: create PR to develop"
+          title: "Auto PR to develop"
+          body: |
+            This PR was created automatically from a feature branch towards develop.
+          base: "develop"
+          branch: "auto/pr-${{ github.sha }}"
