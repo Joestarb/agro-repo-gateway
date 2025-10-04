@@ -12,16 +12,22 @@ COPY pnpm-workspace.yaml ./
 COPY package.json ./
 COPY pnpm-lock.yaml ./
 
-# Copiar el paquete common
-COPY packages/common packages/common
+# Copiar la configuración base de TypeScript para que los paquetes (schemas, common, etc.)
+COPY tsconfig.json ./
 
-# Copiar los archivos de configuración del gateway
+
+# Copiar los paquetes compartidos
+COPY packages/common packages/common
+COPY packages/schemas packages/schemas
+
+# Copiar el package.json del gateway##
 COPY apps/gateway/package.json apps/gateway/
 
-# Instalar dependencias (esto instalará todo el workspace)
+# Instalar dependencias (workspace completo)
 RUN pnpm install --frozen-lockfile
 
-# Construir el paquete común primero
+# Construir primero los paquetes compartidos
+RUN pnpm --filter @agro-project/schemas build
 RUN pnpm --filter @agro-project/common build
 
 # Copiar el código fuente del gateway
