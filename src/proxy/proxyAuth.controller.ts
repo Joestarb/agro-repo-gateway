@@ -5,7 +5,7 @@ import { lastValueFrom } from 'rxjs';
 import {
   LoginDto,
   RegisterDto,
-} from '../../../../packages/common/src/dtos/user.dto';
+} from '../../../../packages/common/dist/dtos/user.dto';
 
 @Controller('auth')
 export class ProxyAuthController {
