@@ -6,7 +6,6 @@ import {
   LoginDto,
   RegisterDto,
 } from '../../../../packages/common/dist/dtos/user.dto';
-
 @Controller('auth')
 export class ProxyAuthController {
   constructor(private http: HttpService) {}
