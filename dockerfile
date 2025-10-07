@@ -19,7 +19,7 @@ COPY packages/common packages/common
 COPY apps/gateway/package.json apps/gateway/
 
 # Instalar dependencias (esto instalará todo el workspace)
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 
 # Construir el paquete común primero
 RUN pnpm --filter @agro-project/common build
