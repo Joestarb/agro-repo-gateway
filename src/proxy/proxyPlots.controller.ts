@@ -1,14 +1,22 @@
-import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
-import axios from 'axios';
 
 @Controller('plots')
 export class ProxyPlotsController {
   constructor(private readonly http: HttpService) {}
 
   private base() {
-    const baseUrl = process.env.PLOTS_SERVICE_URL || 'http://agro-repo-plots:3000';
+    const baseUrl =
+      process.env.PLOTS_SERVICE_URL || 'http://agro-repo-plots:3000';
     return `${baseUrl}/parcelas`;
   }
 
