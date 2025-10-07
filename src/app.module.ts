@@ -9,6 +9,8 @@ import { ProxyPlotsController } from './proxy/proxyPlots.controller';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './loggin.interceptor';
 import { Log } from './logs/logs.entity';
+import { SensorGateway } from './sensor.gateway';
+
 @Module({
   imports: [
     HttpModule,
@@ -35,14 +37,13 @@ import { Log } from './logs/logs.entity';
       useClass: LoggingInterceptor,
     },
     AppService,
+    SensorGateway,
   ],
 })
 export class AppModule implements OnModuleInit {
   constructor(private dataSource: DataSource) {}
 
   onModuleInit() {
-    // TypeORM ya inicializa automáticamente la conexión con forRoot()
-    // Solo verificamos que esté conectado
     if (this.dataSource.isInitialized) {
       console.log('Conectado a la base de datos');
     } else {
