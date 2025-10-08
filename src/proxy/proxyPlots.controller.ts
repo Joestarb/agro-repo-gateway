@@ -26,6 +26,12 @@ export class ProxyPlotsController {
     return r.data;
   }
 
+  @Get('inactivas')
+  async findInactive() {
+    const r = await lastValueFrom(this.http.get(`${this.base()}/inactivas`));
+    return r.data;
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const r = await lastValueFrom(this.http.get(`${this.base()}/${id}`));
