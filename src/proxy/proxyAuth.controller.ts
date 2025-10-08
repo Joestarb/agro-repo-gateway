@@ -2,10 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Body, Controller, Post } from '@nestjs/common';
 import axios from 'axios';
 import { lastValueFrom } from 'rxjs';
-import {
-  LoginDto,
-  RegisterDto,
-} from '../../../../packages/common/dist/dtos/user.dto';
+import { LoginDto, RegisterDto } from '../dto/user.dto';
 @Controller('auth')
 export class ProxyAuthController {
   constructor(private http: HttpService) {}

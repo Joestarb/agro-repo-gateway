@@ -1,14 +1,16 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module, OnModuleInit } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { AppService } from './app.service';
+import { LoggingInterceptor } from './loggin.interceptor';
+import { LogsController } from './logs/logs.controller';
+import { Log } from './logs/logs.entity';
+import { LogsService } from './logs/logs.service';
 import { ProxyAuthController } from './proxy/proxyAuth.controller';
 import { ProxyPlotsController } from './proxy/proxyPlots.controller';
-import { APP_INTERCEPTOR } from '@nestjs/core';
-import { LoggingInterceptor } from './loggin.interceptor';
-import { Log } from './logs/logs.entity';
 import { SensorGateway } from './sensor.gateway';
 
 @Module({
@@ -30,13 +32,14 @@ import { SensorGateway } from './sensor.gateway';
     }),
     TypeOrmModule.forFeature([Log]),
   ],
-  controllers: [ProxyAuthController, ProxyPlotsController],
+  controllers: [ProxyAuthController, ProxyPlotsController, LogsController],
   providers: [
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
     },
     AppService,
+    LogsService,
     SensorGateway,
   ],
 })
