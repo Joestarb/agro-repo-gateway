@@ -11,7 +11,9 @@ import { Log } from './logs/logs.entity';
 import { LogsService } from './logs/logs.service';
 import { ProxyAuthController } from './proxy/proxyAuth.controller';
 import { ProxyPlotsController } from './proxy/proxyPlots.controller';
+import { SensorsController } from './proxy/proxySensors.controller';
 import { SensorGateway } from './sensor.gateway';
+
 
 @Module({
   imports: [
@@ -32,7 +34,7 @@ import { SensorGateway } from './sensor.gateway';
     }),
     TypeOrmModule.forFeature([Log]),
   ],
-  controllers: [ProxyAuthController, ProxyPlotsController, LogsController],
+  controllers: [ProxyAuthController, ProxyPlotsController, LogsController, SensorsController],
   providers: [
     {
       provide: APP_INTERCEPTOR,
